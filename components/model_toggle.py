@@ -5,8 +5,7 @@ from utils.theme import COLORS, FONTS
 
 class ModelToggle(ctk.CTkFrame):
     """
-    Toggle pill que alterna entre 'Modelo Exponencial' y 'Modelo Logístico'.
-    Llama a on_change(modelo: str) cuando cambia.
+    Toggle pill moderno entre 'Modelo Exponencial' y 'Modelo Logístico'.
     """
 
     MODELOS = ["Modelo Exponencial", "Modelo Logístico"]
@@ -15,7 +14,7 @@ class ModelToggle(ctk.CTkFrame):
         super().__init__(
             parent,
             fg_color=COLORS["bg"],
-            corner_radius=20,
+            corner_radius=22,
             border_width=1,
             border_color=COLORS["border"],
             **kwargs,
@@ -26,39 +25,35 @@ class ModelToggle(ctk.CTkFrame):
         self._build()
 
     def _build(self):
+        self.grid_columnconfigure((0, 1), weight=1)
         for i, modelo in enumerate(self.MODELOS):
+            active = (i == 0)
             btn = ctk.CTkButton(
                 self,
                 text=modelo,
-                font=FONTS["label"],
-                height=36,
-                corner_radius=16,
-                fg_color=COLORS["green"] if i == 0 else "transparent",
-                hover_color=COLORS["green_dark"] if i == 0 else COLORS["border"],
-                text_color="#FFFFFF" if i == 0 else COLORS["text_sub"],
+                font=("Arial", 12, "bold") if active else FONTS["label"],
+                height=38,
+                corner_radius=18,
+                fg_color=COLORS["green"] if active else "transparent",
+                hover_color=COLORS["green_dark"] if active else COLORS["border"],
+                text_color="#FFFFFF" if active else COLORS["text_sub"],
                 command=lambda m=modelo: self._select(m),
             )
-            btn.grid(row=0, column=i, padx=4, pady=4)
+            btn.grid(row=0, column=i, padx=4, pady=4, sticky="ew")
             self._btns[modelo] = btn
 
     def _select(self, modelo):
         if modelo == self._active:
             return
-        # Desactivar anterior
         prev = self._btns[self._active]
-        prev.configure(
-            fg_color="transparent",
-            text_color=COLORS["text_sub"],
-            hover_color=COLORS["border"],
-        )
-        # Activar nuevo
+        prev.configure(fg_color="transparent", text_color=COLORS["text_sub"],
+                       hover_color=COLORS["border"],
+                       font=FONTS["label"])
         self._active = modelo
         curr = self._btns[modelo]
-        curr.configure(
-            fg_color=COLORS["green"],
-            text_color="#FFFFFF",
-            hover_color=COLORS["green_dark"],
-        )
+        curr.configure(fg_color=COLORS["green"], text_color="#FFFFFF",
+                       hover_color=COLORS["green_dark"],
+                       font=("Arial", 12, "bold"))
         if self.on_change:
             self.on_change(modelo)
 
