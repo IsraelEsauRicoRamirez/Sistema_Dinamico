@@ -440,3 +440,6 @@ class SimulationPanel(ctk.CTkFrame):
 
     def get_valores(self):
         return {k: v.get() for k, v in self._entries.items()}
+
+
+
