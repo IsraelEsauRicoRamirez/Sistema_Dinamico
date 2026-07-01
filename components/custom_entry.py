@@ -1,34 +1,36 @@
-# components/custom_entry.py
 import customtkinter as ctk
 from utils.theme import COLORS, FONTS, SIZES
 
 
 class CustomEntry(ctk.CTkFrame):
-    """
-    Campo de entrada reutilizable con label, ícono opcional y borde animado en focus.
-    Uso:
-        entry = CustomEntry(parent, label="Correo", placeholder="usuario@ejemplo.com")
-        valor = entry.get()
-    """
-
-    def __init__(self, parent, label="", placeholder="", show="", **kwargs):
+    def __init__(self, parent, label="", placeholder="", show="",
+                 unit="", tooltip="", **kwargs):
         super().__init__(parent, fg_color="transparent", **kwargs)
         self._show = show
-        self._build(label, placeholder, show)
+        self.grid_columnconfigure(0, weight=1)
 
-    def _build(self, label, placeholder, show):
-        # Label
         if label:
-            self.label = ctk.CTkLabel(
-                self,
-                text=label,
+            lbl_frame = ctk.CTkFrame(self, fg_color="transparent")
+            lbl_frame.grid(row=0, column=0, sticky="ew", pady=(0, 5))
+            lbl_frame.grid_columnconfigure(0, weight=1)
+
+            ctk.CTkLabel(
+                lbl_frame, text=label,
                 font=FONTS["label"],
                 text_color=COLORS["text_main"],
                 anchor="w",
-            )
-            self.label.pack(fill="x", pady=(0, 6))
+            ).grid(row=0, column=0, sticky="w")
 
-        # Input
+            if unit:
+                ctk.CTkLabel(
+                    lbl_frame,
+                    text=unit,
+                    font=("Arial", 11, "normal"),
+                    text_color=COLORS["green_dark"],
+                    fg_color=COLORS["green_glow"],
+                    corner_radius=6,
+                ).grid(row=0, column=1, sticky="e", padx=(6, 0))
+
         self.entry = ctk.CTkEntry(
             self,
             placeholder_text=placeholder,
@@ -42,19 +44,29 @@ class CustomEntry(ctk.CTkFrame):
             text_color=COLORS["text_main"],
             placeholder_text_color=COLORS["text_hint"],
         )
-        self.entry.pack(fill="x")
+        self.entry.grid(row=1, column=0, sticky="ew")
 
-        # Focus effects
+        if tooltip:
+            tip = ctk.CTkLabel(
+                self, text=f"ⓘ  {tooltip}",
+                font=("Arial", 10, "normal"),
+                text_color=COLORS["text_hint"],
+                anchor="w",
+                wraplength=260,
+                justify="left",
+            )
+            tip.grid(row=2, column=0, sticky="w", pady=(3, 0))
+
         self.entry.bind("<FocusIn>",  self._on_focus)
         self.entry.bind("<FocusOut>", self._on_blur)
 
     def _on_focus(self, _):
-        self.entry.configure(border_color=COLORS["border_focus"], border_width=2,
-                             fg_color=COLORS["card"])
+        self.entry.configure(border_color=COLORS["border_focus"],
+                             border_width=2, fg_color=COLORS["card"])
 
     def _on_blur(self, _):
-        self.entry.configure(border_color=COLORS["border"], border_width=1,
-                             fg_color=COLORS["input_bg"])
+        self.entry.configure(border_color=COLORS["border"],
+                             border_width=1, fg_color=COLORS["input_bg"])
 
     def get(self):
         return self.entry.get()
@@ -63,14 +75,4 @@ class CustomEntry(ctk.CTkFrame):
         self.entry.delete(0, "end")
 
     def insert(self, index, value):
-        # Aseguramos que siempre convierta el número a String para evitar fallos de Tkinter
-        self.entry.insert(index, str(value))
-
-    def set_value(self, value):
-        """
-        Método ultra-robusto: Borra el campo, inserta el nuevo dato de forma segura
-        y obliga a CustomTkinter a actualizar su memoria interna de inmediato.
-        """
-        self.clear()
-        self.entry.insert(0, str(value))
-        self.entry.update_idletasks()  # <--- Esto soluciona el problema de lectura fantasma
+        self.entry.insert(index, value)

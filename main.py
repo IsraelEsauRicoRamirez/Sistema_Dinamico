@@ -1,7 +1,7 @@
-# main.py
 import customtkinter as ctk
 from views.login_view import LoginView
 from views.register_view import RegisterView
+from views.intro_view import IntroView
 from views.dashboard_view import DashboardView
 from utils.theme import COLORS
 
@@ -13,18 +13,17 @@ class App(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.title("SDCP — Sistemas Dinámicos de Crecimiento Poblacional")
-        self.geometry("980x680")
-        self.minsize(860, 580)
+        self.geometry("1100x720")
+        self.minsize(900, 620)
         self.configure(fg_color=COLORS["bg"])
 
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
 
-        # ── Crear vistas ───────────────────────────────────
         self.login_view = LoginView(
             self,
             on_go_register=self.show_register,
-            on_login_success=self.show_dashboard,
+            on_login_success=self.show_intro,
         )
         self.login_view.grid(row=0, column=0, sticky="nsew")
 
@@ -34,6 +33,12 @@ class App(ctk.CTk):
         )
         self.register_view.grid(row=0, column=0, sticky="nsew")
 
+        self.intro_view = IntroView(
+            self,
+            on_continue=self.show_dashboard,
+        )
+        self.intro_view.grid(row=0, column=0, sticky="nsew")
+
         self.dashboard_view = DashboardView(
             self,
             user_data={
@@ -42,26 +47,26 @@ class App(ctk.CTk):
                 "matricula": "A01234567",
                 "correo":    "juan@ejemplo.com",
             },
+            on_show_intro=self.show_intro,
         )
         self.dashboard_view.grid(row=0, column=0, sticky="nsew")
 
-        # Empezar en login
         self.show_login()
 
-    # ── Navegación ─────────────────────────────────────────
     def show_login(self):
-        self.geometry("980x660")
-        self.resizable(True, True)
+        self.geometry("1100x720")
         self.login_view.tkraise()
 
     def show_register(self):
-        self.geometry("980x760")
-        self.resizable(True, True)
+        self.geometry("1100x800")
         self.register_view.tkraise()
 
-    def show_dashboard(self, user_data=None):
-        self.geometry("1280x800")
-        self.resizable(True, True)
+    def show_intro(self):
+        self.geometry("1280x820")
+        self.intro_view.tkraise()
+
+    def show_dashboard(self):
+        self.geometry("1400x860")
         self.dashboard_view.tkraise()
 
 
