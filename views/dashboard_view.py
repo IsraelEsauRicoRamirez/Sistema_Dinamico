@@ -76,7 +76,7 @@ class SimulatorSection(ctk.CTkFrame):
                      corner_radius=12).pack(side="left", padx=(0,8))
         ctk.CTkLabel(sol_hdr,
                      text="Solución de la ecuación",
-                     font=("Arial", 12, "bold"),
+                     font=("Arial", 14, "bold"),
                      text_color=COLORS["green_dark"]).pack(side="left")
 
         self._sol_lbl = ctk.CTkLabel(
@@ -184,7 +184,7 @@ class SimulatorSection(ctk.CTkFrame):
             self._sol_lbl.configure(
                 text=sol_str,
                 text_color=COLORS["green_dark"],
-                font=("Arial", 14, "bold"))
+                font=("Arial", 16, "bold"))
 
         self._update_chart(modelo, t_vals, p_vals,
                            params.get("K"))
@@ -215,7 +215,7 @@ class SimulatorSection(ctk.CTkFrame):
         if k is not None:
             ax.axhline(k, color="#94A3B8", linewidth=1.4,
                        linestyle="--", label=f"K = {k:,.0f} ind.", zorder=3)
-            ax.legend(fontsize=10, framealpha=0.9)
+            ax.legend(fontsize=12, framealpha=0.9)
 
         # Más marcas en ambos ejes
         ax.xaxis.set_major_locator(matplotlib.ticker.MaxNLocator(integer=True, nbins=12))
@@ -223,9 +223,9 @@ class SimulatorSection(ctk.CTkFrame):
         ax.yaxis.set_major_formatter(
             matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:,.0f}"))
 
-        ax.set_xlabel("Tiempo (t)", fontsize=11, color="#475569", labelpad=6)
-        ax.set_ylabel("Población P(t)", fontsize=11, color="#475569", labelpad=6)
-        ax.tick_params(colors="#64748B", labelsize=10, length=4)
+        ax.set_xlabel("Tiempo (t)", fontsize=13, color="#475569", labelpad=8)
+        ax.set_ylabel("Población P(t)", fontsize=13, color="#475569", labelpad=8)
+        ax.tick_params(colors="#64748B", labelsize=12, length=4)
         for spine in ax.spines.values():
             spine.set_edgecolor("#E2E8F0")
         ax.grid(True, color="#E2E8F0", linewidth=0.8,
@@ -245,7 +245,7 @@ class SimulatorSection(ctk.CTkFrame):
             bbox=dict(boxstyle="round,pad=0.5",
                       fc="#0F172A", ec="#22C55E", lw=1.2, alpha=0.92),
             arrowprops=dict(arrowstyle="->", color="#22C55E", lw=1),
-            fontsize=10, color="#FFFFFF", zorder=10,
+            fontsize=12, color="#FFFFFF", zorder=10,
         )
         annot.set_visible(False)
 
