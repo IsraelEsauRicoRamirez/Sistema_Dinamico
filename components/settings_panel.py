@@ -7,13 +7,12 @@ from utils.db import eliminar_usuario
 class SettingsPanel(ctk.CTkFrame):
     """Panel de configuración — sección del dashboard."""
 
-    # 1. Agregamos user_data y on_logout al constructor
+    
     def __init__(self, parent, user_data=None, on_logout=None, **kwargs):
         super().__init__(parent, fg_color=COLORS["bg"], corner_radius=0, **kwargs)
         self.user_data = user_data
         self.on_logout = on_logout
         
-        # Cargamos las configuraciones guardadas
         self.settings = load_settings()
 
         self.grid_rowconfigure(0, weight=1)
@@ -35,7 +34,7 @@ class SettingsPanel(ctk.CTkFrame):
                      anchor="w").grid(row=0, column=0, sticky="w",
                                       padx=28, pady=(24, 18))
 
-        # 2. Modificamos la lista para usar "claves" del diccionario en lugar de valores fijos
+        
         sections = [
             ("🎨 Apariencia", [
                 ("Tema de la aplicación", "switch", "tema_app"),
@@ -80,7 +79,7 @@ class SettingsPanel(ctk.CTkFrame):
                 ctk.CTkLabel(row_f, text=label, font=FONTS["subtitle"],
                              text_color=COLORS["text_main"], anchor="w").grid(row=0, column=0, sticky="w", pady=8)
 
-                # 3. Lógica dinámica para los Switches y OptionMenus
+                
                 if kind == "switch":
                     config_key = config_data
                     current_val = self.settings.get(config_key, False)
@@ -91,7 +90,7 @@ class SettingsPanel(ctk.CTkFrame):
                                        button_color=COLORS["card"],
                                        button_hover_color=COLORS["green_glow"])
                     
-                    # Conectar el evento del switch
+                    
                     sw.configure(command=lambda k=config_key, w=sw: self._on_switch_change(k, w.get()))
                     
                     if current_val:
@@ -112,7 +111,7 @@ class SettingsPanel(ctk.CTkFrame):
                                             dropdown_fg_color=COLORS["card"],
                                             text_color=COLORS["text_main"])
                     
-                    # Conectar el evento del dropdown
+                    
                     opt.configure(command=lambda v, k=config_key: self._on_option_change(k, v))
                     opt.set(current_val)
                     opt.grid(row=0, column=1, sticky="e")
@@ -124,7 +123,7 @@ class SettingsPanel(ctk.CTkFrame):
                         row=current_row, column=0, sticky="ew", padx=22)
                     current_row += 1 
 
-        # Zona peligrosa
+        
         danger = ctk.CTkFrame(scroll, fg_color=COLORS["card"], corner_radius=18,
                               border_width=1, border_color="#FECACA")
         danger.grid(row=len(sections)+1, column=0, sticky="ew", padx=28, pady=(0, 28))
@@ -140,7 +139,7 @@ class SettingsPanel(ctk.CTkFrame):
         ctk.CTkLabel(row_d, text="Eliminar cuenta permanentemente. Esta acción no se puede deshacer.",
                      font=FONTS["subtitle"], text_color=COLORS["text_sub"], anchor="w").grid(row=0, column=0, sticky="w")
 
-        # Conectamos el botón de eliminar a su función
+        
         ctk.CTkButton(row_d, text="Eliminar cuenta", font=FONTS["label"],
                       height=36, corner_radius=10, fg_color="transparent",
                       border_width=1, border_color="#EF4444",
@@ -148,7 +147,7 @@ class SettingsPanel(ctk.CTkFrame):
                       command=self._eliminar_cuenta).grid(row=0, column=1, sticky="e", padx=(16,0))
 
 
-    # --- FUNCIONES DE LÓGICA (CALLBACKS) ---
+    
 
     def _on_switch_change(self, key, is_on):
         """Se ejecuta cada vez que un switch cambia de estado."""

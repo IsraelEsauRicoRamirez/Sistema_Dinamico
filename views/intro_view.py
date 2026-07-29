@@ -1,98 +1,229 @@
+# views/intro_view.py
+import os
 import customtkinter as ctk
+from PIL import Image
+from utils.theme import COLORS, FONTS, SIZES
 
-class IntroView(ctk.CTkScrollableFrame): 
-    # 1. Agregamos on_continue como parámetro explícito
-    def __init__(self, master, on_continue=None, **kwargs): 
-        # 2. Pasamos solo **kwargs al padre, on_continue ya fue extraído
-        super().__init__(master, **kwargs)
-        
-        # Guardamos la función para usarla en el botón
-        self.on_continue = on_continue 
-        
+class IntroView(ctk.CTkFrame):
+    """Pantalla de bienvenida: explica qué es un sistema dinámico y cómo
+    funciona cada modelo disponible antes de entrar al simulador."""
+
+    def __init__(self, master, on_continue=None, **kwargs):
+        super().__init__(master, fg_color=COLORS["bg"], corner_radius=0, **kwargs)
+        self.on_continue = on_continue
+
+        self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
-        self.configure(fg_color="transparent")
+        self._build()
 
-        # --- ENCABEZADO ---
-        header_frame = ctk.CTkFrame(self, fg_color="transparent")
-        header_frame.grid(row=0, column=0, pady=(10, 30), sticky="ew")
-        
-        title = ctk.CTkLabel(header_frame, text="SDCP", font=ctk.CTkFont(size=40, weight="bold"), text_color="#E0E0E0")
-        title.pack()
-        subtitle = ctk.CTkLabel(header_frame, text="Sistemas Dinámicos de Crecimiento Poblacional", font=ctk.CTkFont(size=16), text_color="gray")
-        subtitle.pack()
+    # ────────────────────────────────────────────────────────────────
+    def _build(self):
+        scroll = ctk.CTkScrollableFrame(self, fg_color="transparent",
+                                        scrollbar_button_color=COLORS["border"])
+        scroll.grid(row=0, column=0, sticky="nsew")
+        scroll.grid_columnconfigure(0, weight=1)
 
-        # --- SECCIÓN 1: ¿QUÉ ES? ---
-        self.create_section_title("¿Qué es un Sistema Dinámico?")
-        
-        intro_text = (
-            "Es un modelo matemático que describe cómo cambia una población en el tiempo.\n"
-            "Utiliza Ecuaciones Diferenciales Ordinarias (EDO) para calcular la tasa de cambio "
-            "(qué tan rápido crece o decrece la población)."
+        row = 0
+
+        # ── Encabezado ──────────────────────────────────────────────
+        header = ctk.CTkFrame(scroll, fg_color="transparent")
+        header.grid(row=row, column=0, sticky="ew", padx=28, pady=(32, 8))
+        header.grid_columnconfigure(0, weight=1)
+
+        ctk.CTkLabel(header, text="SDCP",
+                     font=FONTS["display"],
+                     text_color=COLORS["text_main"]).grid(row=0, column=0, sticky="w")
+        ctk.CTkLabel(header,
+                     text="Sistemas Dinámicos de Crecimiento Poblacional",
+                     font=FONTS["subtitle"],
+                     text_color=COLORS["text_sub"]).grid(row=1, column=0, sticky="w", pady=(2, 0))
+        row += 1
+
+        # ── ¿Qué es un sistema dinámico? ───────────────────────────
+        intro_card = ctk.CTkFrame(scroll, fg_color=COLORS["card"],
+                                  corner_radius=18,
+                                  border_width=1, border_color=COLORS["border"])
+        intro_card.grid(row=row, column=0, sticky="ew", padx=28, pady=(14, 0))
+        intro_card.grid_columnconfigure(0, weight=1)
+
+        ctk.CTkLabel(intro_card, text="¿Qué es un sistema dinámico?",
+                     font=FONTS["label"],
+                     text_color=COLORS["text_sub"],
+                     anchor="w").grid(row=0, column=0, sticky="w", padx=24, pady=(18, 8))
+
+        ctk.CTkLabel(
+            intro_card,
+            text=("Es un modelo matemático que describe cómo cambia una población "
+                  "con el tiempo. La app resuelve una ecuación diferencial que define "
+                  "la tasa de crecimiento y calcula la población P para cada instante t."),
+            font=FONTS["subtitle"],
+            text_color=COLORS["text_main"],
+            wraplength=760, justify="left", anchor="w",
+        ).grid(row=1, column=0, sticky="w", padx=24, pady=(0, 20))
+        row += 1
+
+        # ── Título de sección de modelos ───────────────────────────
+        ctk.CTkLabel(scroll, text="Modelos disponibles",
+                     font=FONTS["label"],
+                     text_color=COLORS["text_sub"],
+                     anchor="w").grid(row=row, column=0, sticky="w",
+                                      padx=28, pady=(22, 8))
+        row += 1
+
+        # ── Tarjetas de modelos (lado a lado) ──────────────────────
+        models_row = ctk.CTkFrame(scroll, fg_color="transparent")
+        models_row.grid(row=row, column=0, sticky="ew", padx=28, pady=(0, 0))
+        models_row.grid_columnconfigure((0, 1), weight=1)
+
+        self._build_model_card(
+            models_row, col=0,
+            badge="Exponencial", badge_bg=COLORS["green_glow"], badge_fg=COLORS["green_dark"],
+            titulo="Modelo de Malthus",
+            para_que=("Sirve para crecimiento libre, sin límite de recursos: "
+                      "bacterias en sus primeras horas, capital con interés compuesto, "
+                      "poblaciones al inicio de su expansión."),
+            image_filename="ecuacion_exponencial.png",  # <-- AQUÍ USAMOS LA IMAGEN
+            solucion="P(t) = P₀ · e^(r·t)",
+            variables=[("P₀", "Población inicial"), ("r", "Tasa de crecimiento"), ("t", "Tiempo")],
+            como_funciona=("La app toma P₀ y r, y evalúa la fórmula para cada t. "
+                           "Como no hay freno, la población crece cada vez más rápido."),
         )
-        self.create_info_card(intro_text)
 
-        # --- SECCIÓN 2: MODELO DE MALTHUS ---
-        self.create_section_title("Modelo Exponencial de Malthus")
-        
-        malthus_frame = ctk.CTkFrame(self, fg_color="#2B2B2B", corner_radius=10)
-        malthus_frame.grid(row=4, column=0, pady=(0, 20), sticky="ew", ipadx=20, ipady=20)
-        malthus_frame.grid_columnconfigure((0, 1), weight=1)
+        self._build_model_card(
+            models_row, col=1,
+            badge="Logístico", badge_bg="#EFF6FF", badge_fg="#3B82F6",
+            titulo="Modelo de Verhulst",
+            para_que=("Sirve cuando los recursos son limitados: la población crece rápido "
+                      "al inicio, pero se frena al acercarse a una capacidad máxima K "
+                      "(alimento, espacio, mercado)."),
+            image_filename="ecuacion_logistica.png",  # <-- AQUÍ USAMOS LA IMAGEN
+            solucion="P(t) = K / (1 + C · e^(−r·t))",
+            variables=[("K", "Capacidad de carga (límite)"), ("C", "Constante = (K − P₀)/P₀")],
+            como_funciona=("La app calcula C a partir de P₀ y K, luego evalúa la fórmula "
+                           "en cada t. La curva se aplana al acercarse a K."),
+        )
+        row += 1
 
-        ctk.CTkLabel(malthus_frame, text="Premisa: El crecimiento es proporcional al número de individuos. Asume recursos infinitos.", 
-                     font=ctk.CTkFont(size=14, weight="bold"), text_color="#2ECC71").grid(row=0, column=0, columnspan=2, pady=(0, 15), sticky="w")
+        # ── Comparación rápida ──────────────────────────────────────
+        comp_card = ctk.CTkFrame(scroll, fg_color=COLORS["card"],
+                                 corner_radius=18,
+                                 border_width=1, border_color=COLORS["border"])
+        comp_card.grid(row=row, column=0, sticky="ew", padx=28, pady=(18, 0))
+        comp_card.grid_columnconfigure((0, 1), weight=1)
 
-        # Ecuaciones
-        ctk.CTkLabel(malthus_frame, text="Ecuación Diferencial:\n\ndP/dt = r · P", font=ctk.CTkFont(size=14)).grid(row=1, column=0, padx=10, sticky="ew")
-        ctk.CTkLabel(malthus_frame, text="Solución Analítica:\n\nP(t) = P₀ · e^(r·t)", font=ctk.CTkFont(size=14), 
-                     fg_color="#1E5128", corner_radius=8).grid(row=1, column=1, padx=10, sticky="ew")
+        ctk.CTkLabel(comp_card, text="¿Cuál elegir?",
+                     font=FONTS["label"], text_color=COLORS["text_sub"],
+                     anchor="w").grid(row=0, column=0, columnspan=2, sticky="w",
+                                      padx=24, pady=(18, 10))
 
-        # Variables Resumidas
-        vars_text = "Variables: P(t) = Población final | P₀ = Población inicial | r = Tasa de crecimiento | t = Tiempo"
-        ctk.CTkLabel(malthus_frame, text=vars_text, text_color="gray").grid(row=2, column=0, columnspan=2, pady=(15, 0), sticky="w")
+        tip = ctk.CTkFrame(comp_card, fg_color=COLORS["green_glow"], corner_radius=8)
+        tip.grid(row=1, column=0, sticky="ew", padx=(24, 8), pady=(0, 18))
+        ctk.CTkLabel(tip, text="Sin límite de recursos → Exponencial",
+                     font=FONTS["caption"], text_color=COLORS["green_dark"],
+                     wraplength=340, justify="left").pack(padx=14, pady=10, anchor="w")
 
-        # --- SECCIÓN 3: MODELO LOGÍSTICO ---
-        self.create_section_title("Modelo Logístico (Verhulst)")
-        
-        log_frame = ctk.CTkFrame(self, fg_color="#2B2B2B", corner_radius=10)
-        log_frame.grid(row=6, column=0, pady=(0, 20), sticky="ew", ipadx=20, ipady=20)
-        log_frame.grid_columnconfigure((0, 1), weight=1)
+        tip2 = ctk.CTkFrame(comp_card, fg_color="#EFF6FF", corner_radius=8)
+        tip2.grid(row=1, column=1, sticky="ew", padx=(8, 24), pady=(0, 18))
+        ctk.CTkLabel(tip2, text="Con capacidad máxima conocida (K) → Logístico",
+                     font=FONTS["caption"], text_color="#3B82F6",
+                     wraplength=340, justify="left").pack(padx=14, pady=10, anchor="w")
+        row += 1
 
-        ctk.CTkLabel(log_frame, text="Premisa: El crecimiento disminuye a medida que la población alcanza el límite de recursos.", 
-                     font=ctk.CTkFont(size=14, weight="bold"), text_color="#3498DB").grid(row=0, column=0, columnspan=2, pady=(0, 15), sticky="w")
-
-        # Ecuaciones
-        ctk.CTkLabel(log_frame, text="Ecuación Diferencial:\n\ndP/dt = r · P(1 - P/K)", font=ctk.CTkFont(size=14)).grid(row=1, column=0, padx=10, sticky="ew")
-        ctk.CTkLabel(log_frame, text="Solución Analítica:\n\nP(t) = K / (1 + C · e^(-r·t))", font=ctk.CTkFont(size=14), 
-                     fg_color="#1A3B5C", corner_radius=8).grid(row=1, column=1, padx=10, sticky="ew")
-
-        # Variables Resumidas
-        vars_log_text = "Variables extra: K = Capacidad de carga (límite máximo) | C = Constante de integración"
-        ctk.CTkLabel(log_frame, text=vars_log_text, text_color="gray").grid(row=2, column=0, columnspan=2, pady=(15, 0), sticky="w")
-
-        # --- EJEMPLO RESUELTO ---
-        ejemplo_frame = ctk.CTkFrame(self, fg_color="#D5F5E3", corner_radius=10) 
-        ejemplo_frame.grid(row=7, column=0, pady=(10, 30), sticky="ew", ipadx=20, ipady=15)
-        
-        ctk.CTkLabel(ejemplo_frame, text="Ejemplo resuelto — Cultivo de bacterias", font=ctk.CTkFont(size=16, weight="bold"), 
-                     text_color="#145A32").pack(anchor="w", pady=(0, 10))
-        ctk.CTkLabel(ejemplo_frame, text="Si iniciamos con 150 bacterias y crecen a una tasa del 20% (0.2) por hora, ¿cuántas habrá en 5 horas?\nP(5) = 150 · e^(0.2 · 5) ≈ 407 bacterias.", 
-                     justify="left", text_color="black").pack(anchor="w")
-
-        # --- BOTÓN DE CONTINUAR ---
-        # Usamos el parámetro on_continue que extrajimos en el __init__
+        # ── Botón continuar ─────────────────────────────────────────
         if self.on_continue:
-            btn_continuar = ctk.CTkButton(self, text="Continuar al Simulador", font=ctk.CTkFont(weight="bold"),
-                                          command=self.on_continue, height=40)
-            btn_continuar.grid(row=8, column=0, pady=(0, 40))
+            ctk.CTkButton(scroll, text="Continuar al simulador",
+                          font=FONTS["button"],
+                          height=SIZES["button_height"],
+                          corner_radius=SIZES["corner_radius"],
+                          fg_color=COLORS["green"],
+                          hover_color=COLORS["green_hover"],
+                          text_color="#FFFFFF",
+                          command=self.on_continue
+                          ).grid(row=row, column=0, sticky="ew", padx=28, pady=(24, 32))
 
-    def create_section_title(self, text):
-        title_lbl = ctk.CTkLabel(self, text=f"▍ {text}", font=ctk.CTkFont(size=20, weight="bold"), text_color="#2ECC71")
-        row = self.grid_size()[1] 
-        title_lbl.grid(row=row, column=0, pady=(10, 10), sticky="w")
+    # ────────────────────────────────────────────────────────────────
+    def _build_model_card(self, parent, col, badge, badge_bg, badge_fg, titulo,
+                          para_que, image_filename, solucion, variables, como_funciona):
+        pad = (0, 10) if col == 0 else (10, 0)
+        card = ctk.CTkFrame(parent, fg_color=COLORS["card"],
+                            corner_radius=18,
+                            border_width=1, border_color=COLORS["border"])
+        card.grid(row=0, column=col, sticky="new", padx=pad, pady=(0, 0))
+        card.grid_columnconfigure(0, weight=1)
 
-    def create_info_card(self, text):
-        card = ctk.CTkFrame(self, fg_color="#2B2B2B", corner_radius=10)
-        row = self.grid_size()[1]
-        card.grid(row=row, column=0, pady=(0, 20), sticky="ew", ipadx=20, ipady=15)
-        lbl = ctk.CTkLabel(card, text=text, justify="left", font=ctk.CTkFont(size=14), text_color="#CCCCCC")
-        lbl.pack(anchor="w")
+        # Badge + título
+        hdr = ctk.CTkFrame(card, fg_color="transparent")
+        hdr.grid(row=0, column=0, sticky="w", padx=22, pady=(18, 4))
+        ctk.CTkLabel(hdr, text=f"  {badge}  ",
+                     font=("Arial", 10, "bold"),
+                     text_color=badge_fg, fg_color=badge_bg,
+                     corner_radius=8).pack(side="left")
+
+        ctk.CTkLabel(card, text=titulo,
+                     font=("Arial", 17, "bold"),
+                     text_color=COLORS["text_main"],
+                     anchor="w").grid(row=1, column=0, sticky="w", padx=22, pady=(4, 8))
+
+        # Para qué sirve
+        ctk.CTkLabel(card, text=para_que,
+                     font=FONTS["caption"],
+                     text_color=COLORS["text_sub"],
+                     wraplength=330, justify="left", anchor="w"
+                     ).grid(row=2, column=0, sticky="w", padx=22, pady=(0, 14))
+
+        # Ecuaciones
+        eq_frame = ctk.CTkFrame(card, fg_color=COLORS["surface"], corner_radius=12)
+        eq_frame.grid(row=3, column=0, sticky="ew", padx=22, pady=(0, 12))
+        eq_frame.grid_columnconfigure(0, weight=1)
+
+        ctk.CTkLabel(eq_frame, text="Ecuación diferencial",
+                     font=FONTS["small"], text_color=COLORS["text_hint"],
+                     anchor="w").grid(row=0, column=0, sticky="w", padx=14, pady=(10, 0))
+
+        # --- LÓGICA PARA CARGAR LA IMAGEN DE LA ECUACIÓN ---
+        try:
+            # Busca la imagen en la carpeta 'assets' subiendo un nivel desde 'views'
+            current_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            image_path = os.path.join(current_dir, "assets", image_filename)
+            
+            # Cargar imagen y calcular tamaño proporcional (altura fija de 40px)
+            pil_img = Image.open(image_path)
+            base_height = 35
+            w_percent = (base_height / float(pil_img.size[1]))
+            h_size = int((float(pil_img.size[0]) * float(w_percent)))
+            
+            ctk_img = ctk.CTkImage(light_image=pil_img, dark_image=pil_img, size=(h_size, base_height))
+            
+            # Mostrar la imagen en lugar del texto
+            ctk.CTkLabel(eq_frame, text="", image=ctk_img).grid(row=1, column=0, sticky="w", padx=14, pady=(5, 10))
+        except Exception as e:
+            # Si no encuentra la imagen, muestra este texto por defecto
+            ctk.CTkLabel(eq_frame, text=f"[Falta imagen: {image_filename}]",
+                         font=("Arial", 12, "italic"), text_color=COLORS["text_main"],
+                         anchor="w").grid(row=1, column=0, sticky="w", padx=14, pady=(0, 10))
+        # ----------------------------------------------------
+
+        ctk.CTkFrame(eq_frame, height=1, fg_color=COLORS["border"]).grid(
+            row=2, column=0, sticky="ew", padx=14)
+
+        ctk.CTkLabel(eq_frame, text="Solución (lo que grafica la app)",
+                     font=FONTS["small"], text_color=COLORS["text_hint"],
+                     anchor="w").grid(row=3, column=0, sticky="w", padx=14, pady=(10, 0))
+        ctk.CTkLabel(eq_frame, text=solucion,
+                     font=("Arial", 14, "bold"), text_color=COLORS["green_dark"],
+                     anchor="w").grid(row=4, column=0, sticky="w", padx=14, pady=(0, 12))
+
+        # Variables clave
+        var_text = "  ·  ".join(f"{k} = {v}" for k, v in variables)
+        ctk.CTkLabel(card, text=var_text,
+                     font=FONTS["small"], text_color=COLORS["text_hint"],
+                     wraplength=330, justify="left", anchor="w"
+                     ).grid(row=4, column=0, sticky="w", padx=22, pady=(0, 10))
+
+        # Cómo lo calcula la app
+        how = ctk.CTkFrame(card, fg_color="transparent")
+        how.grid(row=5, column=0, sticky="ew", padx=22, pady=(0, 20))
+        ctk.CTkLabel(how, text=como_funciona,
+                     font=("Arial", 11, "italic"),
+                     text_color=COLORS["text_sub"],
+                     wraplength=330, justify="left", anchor="w").pack(anchor="w")
