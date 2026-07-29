@@ -35,17 +35,23 @@ class ModelToggle(ctk.CTkFrame):
     def _select(self, modelo):
         if modelo == self._active:
             return
+        
+        # Desactivar el botón previo
         prev = self._btns[self._active]
         prev.configure(fg_color="transparent",
                        text_color=COLORS["text_sub"],
                        hover_color=COLORS["border"],
                        font=FONTS["label"])
+        
+        # Activar el nuevo botón
         self._active = modelo
         curr = self._btns[modelo]
         curr.configure(fg_color=COLORS["green"],
                        text_color="#FFFFFF",
                        hover_color=COLORS["green_dark"],
                        font=("Arial", 13, "bold"))
+        
+        # Disparar el evento
         if self.on_change:
             self.on_change(modelo)
 

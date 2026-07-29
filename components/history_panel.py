@@ -1,8 +1,5 @@
-
-# components/history_panel.py
 import customtkinter as ctk
 from utils.theme import COLORS, FONTS
-
 
 # Datos de ejemplo para el historial
 SAMPLE_HISTORY = [
@@ -12,7 +9,6 @@ SAMPLE_HISTORY = [
     {"modelo": "Modelo Logístico",   "fecha": "22 Jun 2026  14:50", "p0": "200", "r": "0.2", "t": "50", "resultado": "980"},
     {"modelo": "Modelo Exponencial", "fecha": "21 Jun 2026  11:27", "p0": "50",  "r": "0.15","t": "40", "resultado": "1,001"},
 ]
-
 
 class HistoryPanel(ctk.CTkFrame):
     """Panel de historial de simulaciones — sección del dashboard."""
@@ -25,7 +21,7 @@ class HistoryPanel(ctk.CTkFrame):
 
     def _build(self):
         scroll = ctk.CTkScrollableFrame(self, fg_color="transparent",
-                                         scrollbar_button_color=COLORS["border"])
+                                        scrollbar_button_color=COLORS["border"])
         scroll.grid(row=0, column=0, sticky="nsew")
         scroll.grid_columnconfigure(0, weight=1)
 
@@ -39,7 +35,7 @@ class HistoryPanel(ctk.CTkFrame):
                      text_color=COLORS["text_main"],
                      anchor="w").grid(row=0, column=0, sticky="w")
 
-        ctk.CTkButton(hdr, text="⬇  Exportar todo",
+        ctk.CTkButton(hdr, text="⬇ Exportar todo",
                       font=FONTS["caption"],
                       height=34, corner_radius=10,
                       fg_color="transparent",
@@ -58,10 +54,11 @@ class HistoryPanel(ctk.CTkFrame):
             ("2", "Modelos distintos",    "🔢"),
             ("23 Jun", "Última ejecución","📅"),
         ]
+        
         for i, (val, lbl, icon) in enumerate(stat_data):
             card = ctk.CTkFrame(stats, fg_color=COLORS["card"],
-                                 corner_radius=14,
-                                 border_width=1, border_color=COLORS["border"])
+                                corner_radius=14,
+                                border_width=1, border_color=COLORS["border"])
             card.grid(row=0, column=i, sticky="ew",
                       padx=(0,10) if i<2 else 0)
             card.grid_columnconfigure(0, weight=1)
@@ -77,14 +74,14 @@ class HistoryPanel(ctk.CTkFrame):
 
         # Tabla de historial
         table_card = ctk.CTkFrame(scroll, fg_color=COLORS["card"],
-                                   corner_radius=18,
-                                   border_width=1, border_color=COLORS["border"])
+                                  corner_radius=18,
+                                  border_width=1, border_color=COLORS["border"])
         table_card.grid(row=2, column=0, sticky="ew", padx=28, pady=(18, 28))
         table_card.grid_columnconfigure(0, weight=1)
 
         # Header tabla
         cols_hdr = ctk.CTkFrame(table_card, fg_color=COLORS["surface"],
-                                 corner_radius=10)
+                                corner_radius=10)
         cols_hdr.grid(row=0, column=0, sticky="ew", padx=16, pady=(16,0))
         cols_hdr.grid_columnconfigure((0,1,2,3,4), weight=1)
 
@@ -106,11 +103,11 @@ class HistoryPanel(ctk.CTkFrame):
             badge_text_color = COLORS["green_dark"] if "Expo" in entry["modelo"] else "#3B82F6"
 
             badge = ctk.CTkLabel(row_f,
-                                  text=f"  {entry['modelo']}  ",
-                                  font=("Arial", 10, "bold"),
-                                  text_color=badge_text_color,
-                                  fg_color=badge_color,
-                                  corner_radius=8)
+                                 text=f"  {entry['modelo']}  ",
+                                 font=("Arial", 10, "bold"),
+                                 text_color=badge_text_color,
+                                 fg_color=badge_color,
+                                 corner_radius=8)
             badge.grid(row=0, column=0, padx=14, pady=10, sticky="w")
 
             for col, key in [(1,"fecha"),(2,"p0"),(3,"r"),(4,"resultado")]:

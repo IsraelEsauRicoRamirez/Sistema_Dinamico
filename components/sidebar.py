@@ -103,7 +103,9 @@ class Sidebar(ctk.CTkFrame):
         elif prev == "configuracion":
             self._settings_btn.configure(fg_color="transparent",
                                           text_color=COLORS["text_sub"])
+        
         self._active = key
+        
         if key in self._nav_btns:
             _, nb, nl = self._nav_btns[key]
             nb.configure(fg_color=COLORS["green_subtle"],
@@ -112,5 +114,6 @@ class Sidebar(ctk.CTkFrame):
         elif key == "configuracion":
             self._settings_btn.configure(fg_color=COLORS["green_subtle"],
                                           text_color=COLORS["green"])
+        
         if self.on_navigate:
             self.on_navigate(key)

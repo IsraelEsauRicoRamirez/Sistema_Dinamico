@@ -3,7 +3,8 @@ import tkinter as tk
 import customtkinter as ctk
 from utils.theme import COLORS, FONTS, SIZES
 from components.custom_entry import CustomEntry
-
+from utils.db import registrar_usuario
+from tkinter import messagebox
 
 def draw_logo(parent, size=44, bg="#FFFFFF"):
     scale = size / 100
@@ -121,6 +122,7 @@ class RegisterView(ctk.CTkFrame):
                      font=FONTS["display"],
                      text_color=COLORS["text_main"],
                      anchor="w").pack(fill="x")
+        
         ctk.CTkLabel(inner,
                      text="Completa los datos para empezar a simular.",
                      font=FONTS["subtitle"],
@@ -200,13 +202,15 @@ class RegisterView(ctk.CTkFrame):
                    padx=(0,7) if i==0 else (7,0))
             setattr(self, f"_btn_{rol.lower()}", b)
 
+        # SE MODIFICÓ ESTE BOTÓN PARA AÑADIR EL COMANDO
         ctk.CTkButton(inner, text="Crear cuenta",
                       font=FONTS["button"],
                       height=SIZES["button_height"],
                       corner_radius=SIZES["corner_radius"],
                       fg_color=COLORS["green"],
                       hover_color=COLORS["green_hover"],
-                      text_color="#FFFFFF").pack(fill="x")
+                      text_color="#FFFFFF",
+                      command=self._handle_register).pack(fill="x")
 
         ctk.CTkLabel(inner,
                      text="Al registrarte aceptas los Términos de uso y la Política de privacidad.",
@@ -239,3 +243,23 @@ class RegisterView(ctk.CTkFrame):
                 hover_color=COLORS["green_dark"] if active else COLORS["border"],
                 font=("Arial", 13, "bold") if active else FONTS["label"],
             )
+
+    # ── NUEVA FUNCIÓN PARA GESTIONAR EL REGISTRO EN BASE DE DATOS ─────────────
+    def _handle_register(self):
+        nombre = self.name_entry.get().strip()
+        matricula = self.id_entry.get().strip()
+        correo = self.email_entry.get().strip()
+        password = self.pass_entry.get().strip()
+        rol = self.rol_var.get()
+
+        if not all([nombre, matricula, correo, password]):
+            messagebox.showerror("Error", "Por favor completa todos los campos.")
+            return
+
+        exito = registrar_usuario(nombre, matricula, correo, password, rol)
+        if exito:
+            messagebox.showinfo("Éxito", "Cuenta creada correctamente. Ya puedes iniciar sesión.")
+            if self.on_go_login:
+                self.on_go_login()
+        else:
+            messagebox.showerror("Error", "Este correo ya está registrado.")

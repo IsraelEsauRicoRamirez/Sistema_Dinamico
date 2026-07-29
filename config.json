@@ -1,0 +1,12 @@
+{
+    "tema_app": false,
+    "modo_oscuro": false,
+    "tamano_fuente": "Normal",
+    "precision": "Alta",
+    "auto_guardar": true,
+    "animacion_grafica": true,
+    "alertas": true,
+    "correo_csv": false,
+    "idioma": "Espa\u00f1ol",
+    "formato_num": "1,000.00"
+}

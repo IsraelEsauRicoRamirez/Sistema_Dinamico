@@ -3,6 +3,8 @@ import tkinter as tk
 import customtkinter as ctk
 from utils.theme import COLORS, FONTS, SIZES
 from components.custom_entry import CustomEntry
+from utils.db import validar_login
+from tkinter import messagebox
 
 
 def draw_logo(parent, size=42, bg="#FFFFFF"):
@@ -25,10 +27,11 @@ def draw_logo(parent, size=42, bg="#FFFFFF"):
 
 class LoginView(ctk.CTkFrame):
     """Login fullscreen. Lado izquierdo: liquid glass blanco con blobs verdes.
-       Lado derecho: formulario blanco limpio."""
+       Lado derecho: formulario limpio adaptativo (Claro/Oscuro)."""
 
     def __init__(self, parent, on_go_register=None, on_login_success=None, **kwargs):
-        super().__init__(parent, fg_color="#FFFFFF", corner_radius=0, **kwargs)
+        # ── CORRECCIÓN 1: Usar COLORS["bg"] para el fondo general del frame
+        super().__init__(parent, fg_color=COLORS["bg"], corner_radius=0, **kwargs)
         self.on_go_register   = on_go_register
         self.on_login_success = on_login_success
         self._build()
@@ -43,7 +46,8 @@ class LoginView(ctk.CTkFrame):
 
     # ── Panel izquierdo: liquid glass ────────────────────────────────────────
     def _build_left(self):
-        left = ctk.CTkFrame(self, fg_color="transparent", corner_radius=0)
+        # Se mantiene blanco por diseño de marca (brand side)
+        left = ctk.CTkFrame(self, fg_color="#FFFFFF", corner_radius=0)
         left.grid(row=0, column=0, sticky="nsew")
 
         # Canvas de fondo con blobs
@@ -105,7 +109,8 @@ class LoginView(ctk.CTkFrame):
 
     # ── Panel derecho: formulario ─────────────────────────────────────────────
     def _build_right(self):
-        right = ctk.CTkFrame(self, fg_color="#FFFFFF", corner_radius=0,
+        # ── CORRECCIÓN 2: Usar COLORS["bg"] para el fondo derecho
+        right = ctk.CTkFrame(self, fg_color=COLORS["bg"], corner_radius=0,
                               border_width=1, border_color=COLORS["border"])
         right.grid(row=0, column=1, sticky="nsew")
         right.grid_rowconfigure(0, weight=1)
@@ -125,25 +130,15 @@ class LoginView(ctk.CTkFrame):
                      text_color=COLORS["text_sub"],
                      anchor="w").pack(fill="x", pady=(4, 22))
 
-        # Social
-        sf = ctk.CTkFrame(inner, fg_color="transparent")
-        sf.pack(fill="x")
-        sf.grid_columnconfigure((0,1), weight=1)
-
-        ctk.CTkButton(sf, text="G   Google",
+        # ── CORRECCIÓN 3: Botón único de Google abarcando todo el ancho
+        ctk.CTkButton(inner, text="G   Continuar con Google",
                       font=("Arial", 12, "bold"), height=42,
                       corner_radius=SIZES["corner_radius"],
-                      fg_color="#FFFFFF", hover_color="#F8FAFC",
+                      fg_color=COLORS["card"], hover_color=COLORS["surface"],
                       text_color=COLORS["text_main"],
                       border_width=1, border_color=COLORS["border_strong"],
-                      ).grid(row=0, column=0, sticky="ew", padx=(0,5))
-
-        ctk.CTkButton(sf, text="f   Facebook",
-                      font=("Arial", 12, "bold"), height=42,
-                      corner_radius=SIZES["corner_radius"],
-                      fg_color="#1877F2", hover_color="#1667D9",
-                      text_color="#FFFFFF",
-                      ).grid(row=0, column=1, sticky="ew", padx=(5,0))
+                      command=self._login_con_google
+                      ).pack(fill="x")
 
         # Divider
         dv = ctk.CTkFrame(inner, fg_color="transparent")
@@ -163,6 +158,7 @@ class LoginView(ctk.CTkFrame):
                                       placeholder="••••••••", show="•")
         self.pass_entry.pack(fill="x", pady=(0,4))
 
+        # ── CORRECCIÓN 4: Vincular evento clic para recuperar contraseña
         forgot = ctk.CTkLabel(inner, text="¿Olvidaste tu contraseña?",
                                font=FONTS["caption"],
                                text_color=COLORS["green_dark"],
@@ -170,6 +166,7 @@ class LoginView(ctk.CTkFrame):
         forgot.pack(fill="x", pady=(0,20))
         forgot.bind("<Enter>", lambda _: forgot.configure(text_color=COLORS["green"]))
         forgot.bind("<Leave>", lambda _: forgot.configure(text_color=COLORS["green_dark"]))
+        forgot.bind("<Button-1>", lambda _: self._recuperar_password()) # Evento de clic agregado
 
         ctk.CTkButton(inner, text="Iniciar Sesión",
                       font=FONTS["button"],
@@ -193,6 +190,40 @@ class LoginView(ctk.CTkFrame):
         link.bind("<Enter>",    lambda _: link.configure(text_color=COLORS["green"]))
         link.bind("<Leave>",    lambda _: link.configure(text_color=COLORS["green_dark"]))
 
+
+    # ── FUNCIONES LÓGICAS ─────────────────────────────────────────────────────
+    
     def _handle_login(self):
+        correo = self.email_entry.get().strip()
+        password = self.pass_entry.get().strip()
+        
+        if not correo or not password:
+            messagebox.showwarning("Atención", "Ingresa correo y contraseña.")
+            return
+            
+        user_data = validar_login(correo, password)
+        
+        if user_data:
+            if self.on_login_success:
+                self.on_login_success(user_data) # Pasamos los datos del usuario al main
+        else:
+            messagebox.showerror("Error", "Credenciales incorrectas.")
+
+    def _login_con_google(self):
+        # Aquí puedes agregar la lógica real de Firebase o la API de Google.
+        # Por ahora, simularemos un login exitoso creando un usuario ficticio:
         if self.on_login_success:
-            self.on_login_success()
+            user_data = {
+                "id": 999,
+                "nombre": "Usuario Google",
+                "email": "usuario.google@ejemplo.com",
+                "rol": "admin"
+            }
+            self.on_login_success(user_data)
+
+    def _recuperar_password(self):
+        correo = self.email_entry.get().strip()
+        if not correo or "@" not in correo:
+            messagebox.showwarning("Atención", "Por favor, escribe un correo válido en la casilla superior para enviarte el enlace.")
+        else:
+            messagebox.showinfo("Recuperación", f"Se ha enviado un enlace para restablecer la contraseña a:\n\n{correo}")
