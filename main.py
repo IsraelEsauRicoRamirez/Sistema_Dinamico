@@ -110,12 +110,32 @@ class App(ctk.CTk):
             self.dashboard_view = DashboardView(
                 self,
                 user_data=self.current_user_data or fallback_data,
-                on_show_intro=self.logout,  # <-- CONECTADO A LA NUEVA FUNCIÓN DE LOGOUT
+                on_show_intro=self.show_intro_from_dashboard,  # solo muestra intro, sin cerrar sesión
             )
             
         self.geometry("1400x860")
         self.dashboard_view.grid(row=0, column=0, sticky="nsew")
         
+    def show_intro_from_dashboard(self):
+        """Muestra la intro desde el dashboard sin cerrar sesión.
+        El botón 'Volver al simulador' de la intro regresa al dashboard."""
+        self.hide_all_views()
+        self.geometry("1280x820")
+        # Reconectamos on_continue para que regrese al dashboard (no a show_dashboard
+        # que recrearía el widget), sino directamente mostrar el dashboard existente
+        self.intro_view.on_continue = self._return_to_dashboard
+        self.intro_view.grid(row=0, column=0, sticky="nsew")
+
+    def _return_to_dashboard(self):
+        """Regresa al dashboard existente después de ver la intro (sin recrearlo)."""
+        self.hide_all_views()
+        self.geometry("1400x860")
+        if self.dashboard_view is not None:
+            self.dashboard_view.grid(row=0, column=0, sticky="nsew")
+        else:
+            # Si por alguna razón no existe, lo recreamos
+            self.show_dashboard()
+
     def logout(self):
         """Se ejecuta al cerrar sesión o al eliminar la cuenta."""
         self.current_user_data = None  # Borramos la sesión activa
@@ -125,6 +145,9 @@ class App(ctk.CTk):
         if self.dashboard_view is not None:
             self.dashboard_view.destroy()
             self.dashboard_view = None
+
+        # Restauramos on_continue de la intro para que vaya a show_dashboard normal
+        self.intro_view.on_continue = self.show_dashboard
             
         # Regresamos a la pantalla de inicio de sesión
         self.show_login()

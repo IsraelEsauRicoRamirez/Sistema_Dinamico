@@ -130,16 +130,18 @@ class IntroView(ctk.CTkFrame):
         row += 1
 
         # ── Botón continuar ─────────────────────────────────────────
-        if self.on_continue:
-            ctk.CTkButton(scroll, text="Continuar al simulador",
-                          font=FONTS["button"],
-                          height=SIZES["button_height"],
-                          corner_radius=SIZES["corner_radius"],
-                          fg_color=COLORS["green"],
-                          hover_color=COLORS["green_hover"],
-                          text_color="#FFFFFF",
-                          command=self.on_continue
-                          ).grid(row=row, column=0, sticky="ew", padx=28, pady=(24, 32))
+        # Usamos lambda para evaluar on_continue en tiempo de clic (no al construir),
+        # así si main.py cambia self.intro_view.on_continue después, el botón
+        # siempre llama al callback correcto (ir al dashboard o al simulador).
+        ctk.CTkButton(scroll, text="Continuar al simulador",
+                      font=FONTS["button"],
+                      height=SIZES["button_height"],
+                      corner_radius=SIZES["corner_radius"],
+                      fg_color=COLORS["green"],
+                      hover_color=COLORS["green_hover"],
+                      text_color="#FFFFFF",
+                      command=lambda: self.on_continue() if self.on_continue else None
+                      ).grid(row=row, column=0, sticky="ew", padx=28, pady=(24, 32))
 
     # ────────────────────────────────────────────────────────────────
     def _build_model_card(self, parent, col, badge, badge_bg, badge_fg, titulo,

@@ -123,13 +123,23 @@ class SimulatorSection(ctk.CTkFrame):
         self._chart_area.grid_rowconfigure(0, weight=1)
         self._chart_area.grid_columnconfigure(0, weight=1)
 
-        self._placeholder = ctk.CTkLabel(
-            self._chart_area,
-            text="📈\n\nConfigura los parámetros y\npulsa ▶ Ejecutar Simulación",
-            font=FONTS["subtitle"],
-            text_color=COLORS["text_hint"],
-            justify="center")
-        self._placeholder.place(relx=.5, rely=.5, anchor="center")
+        # Placeholder: ícono grande de gráfica + instrucción
+        ph_frame = ctk.CTkFrame(self._chart_area, fg_color="transparent")
+        ph_frame.place(relx=.5, rely=.5, anchor="center")
+        ctk.CTkLabel(ph_frame,
+                     text="∫",
+                     font=("Georgia", 64, "bold"),
+                     text_color="#22C55E").pack()
+        ctk.CTkLabel(ph_frame,
+                     text="P(t) = P₀ · eʳᵗ",
+                     font=("Arial", 15, "italic"),
+                     text_color=COLORS["text_hint"]).pack(pady=(4, 0))
+        ctk.CTkLabel(ph_frame,
+                     text="Configura los parámetros y pulsa  ▶ Ejecutar Simulación",
+                     font=FONTS["caption"],
+                     text_color=COLORS["text_hint"],
+                     justify="center").pack(pady=(8, 0))
+        self._placeholder = ph_frame
 
         # ── Tabla de datos ────────────────────────────────────────────────────
         table_card = ctk.CTkFrame(right, fg_color=COLORS["card"],

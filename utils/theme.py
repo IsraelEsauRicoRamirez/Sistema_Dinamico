@@ -32,9 +32,9 @@ FONTS = {
 }
 
 SIZES = {
-    "sidebar_width": 250,
-    "sidebar_w": 250,
-    "sidebar_w_exp": 200,    
+    "sidebar_width": 72,     # colapsado: solo íconos
+    "sidebar_w":     72,     # colapsado: solo íconos
+    "sidebar_w_exp": 210,    # expandido: íconos + labels de texto
     "header_height": 64,
     "corner_radius": 12,
     "input_height": 40,

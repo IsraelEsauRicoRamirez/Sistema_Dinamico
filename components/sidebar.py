@@ -3,8 +3,9 @@ from utils.theme import COLORS, FONTS, SIZES
 
 
 class Sidebar(ctk.CTkFrame):
+    # Íconos: ∫ (integral) para el simulador, 👤 perfil, 📊 historial
     NAV_ITEMS = [
-        ("⊞",  "simulador",  "Simulador"),
+        ("∫",  "simulador",  "Simulador"),
         ("👤", "perfil",     "Mi Perfil"),
         ("📊", "historial",  "Historial"),
     ]
@@ -46,8 +47,10 @@ class Sidebar(ctk.CTkFrame):
             frame.grid(row=2+idx, column=0, sticky="ew", padx=10, pady=3)
             frame.grid_columnconfigure(1, weight=1)
 
+            # El ícono ∫ del simulador necesita una fuente serif para verse bien
+            icon_font = ("Georgia", 26, "bold") if icon == "∫" else ("Arial", 21)
             btn = ctk.CTkButton(
-                frame, text=icon, font=("Arial", 21),
+                frame, text=icon, font=icon_font,
                 width=46, height=46,
                 fg_color=COLORS["green_subtle"] if active else "transparent",
                 hover_color=COLORS["green_subtle"],
@@ -60,6 +63,8 @@ class Sidebar(ctk.CTkFrame):
                                font=FONTS["label"],
                                text_color=COLORS["green"] if active else COLORS["text_sub"],
                                anchor="w")
+            # Los labels arrancan OCULTOS — solo se muestran al expandir con ☰
+            # (NO llamar a lbl.grid() aquí)
             self._nav_btns[key] = (frame, btn, lbl)
 
         self._settings_frame = ctk.CTkFrame(self, fg_color="transparent")
