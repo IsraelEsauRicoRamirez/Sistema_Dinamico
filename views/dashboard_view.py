@@ -1,4 +1,3 @@
-# views/dashboard_view.py
 import tkinter as tk
 import customtkinter as ctk
 import math
@@ -56,6 +55,7 @@ class SimulatorSection(ctk.CTkFrame):
         self._last_anios  = []
         self._last_p      = []
         self._last_modelo = ""
+        self._last_unidad = "Años"
         self._build()
 
     def _build(self):
@@ -146,7 +146,7 @@ class SimulatorSection(ctk.CTkFrame):
                                   corner_radius=16,
                                   border_width=1, border_color=COLORS["border"])
         table_card.grid(row=2, column=0, sticky="nsew", padx=16, pady=(0, 16))
-        table_card.grid_rowconfigure(2, weight=1)
+        table_card.grid_rowconfigure(3, weight=1)
         table_card.grid_columnconfigure(0, weight=1)
 
         th = ctk.CTkFrame(table_card, fg_color="transparent")
@@ -169,20 +169,31 @@ class SimulatorSection(ctk.CTkFrame):
             command=self._exportar_csv)
         self._csv_btn.grid(row=0, column=1, sticky="e")
 
+        # Ecuación modelo con datos sustituidos
+        self._eq_lbl = ctk.CTkLabel(
+            table_card,
+            text="",
+            font=("Arial", 12, "bold"),
+            text_color=COLORS["green_dark"],
+            anchor="w")
+        self._eq_lbl.grid(row=1, column=0, sticky="w", padx=18, pady=(4, 2))
+
         cols = ctk.CTkFrame(table_card, fg_color=COLORS["surface"], corner_radius=6)
-        cols.grid(row=1, column=0, sticky="ew", padx=16, pady=(10, 0))
+        cols.grid(row=2, column=0, sticky="ew", padx=16, pady=(6, 0))
         cols.grid_columnconfigure((0, 1, 2), weight=1)
-        for i, col in enumerate(["AÑO", "TIEMPO (t)", "POBLACIÓN  P(t)"]):
-            ctk.CTkLabel(cols, text=col,
-                         font=("Arial", 10, "bold"),
-                         text_color=COLORS["text_hint"],
-                         anchor="w").grid(row=0, column=i,
-                                          padx=18, pady=8, sticky="w")
+        
+        # Referencia guardada para poder modificar el nombre de la columna "TIEMPO" dinámicamente
+        self._col_tiempo_lbl = ctk.CTkLabel(cols, text="TIEMPO / AÑO",
+                                            font=("Arial", 10, "bold"), text_color=COLORS["text_hint"], anchor="w")
+        self._col_tiempo_lbl.grid(row=0, column=0, padx=18, pady=8, sticky="w")
+        
+        ctk.CTkLabel(cols, text="TIEMPO (t)", font=("Arial", 10, "bold"), text_color=COLORS["text_hint"], anchor="w").grid(row=0, column=1, padx=18, pady=8, sticky="w")
+        ctk.CTkLabel(cols, text="POBLACIÓN P(t)", font=("Arial", 10, "bold"), text_color=COLORS["text_hint"], anchor="w").grid(row=0, column=2, padx=18, pady=8, sticky="w")
 
         self._table_body = ctk.CTkScrollableFrame(
             table_card, fg_color="transparent",
             scrollbar_button_color=COLORS["border"])
-        self._table_body.grid(row=2, column=0, sticky="nsew", padx=16, pady=(0, 12))
+        self._table_body.grid(row=3, column=0, sticky="nsew", padx=16, pady=(0, 12))
         self._table_body.grid_columnconfigure((0, 1, 2), weight=1)
 
         self._no_data_lbl = ctk.CTkLabel(
@@ -194,26 +205,36 @@ class SimulatorSection(ctk.CTkFrame):
 
     # ── Callbacks ─────────────────────────────────────────────────────────────
     def _on_result(self, modelo, anios, p_vals, params):
-        """Recibe años reales (ej. 1975, 1980, …, 2025) y poblaciones."""
+        """Recibe tiempos/años reales y poblaciones."""
         self._last_anios  = anios
         self._last_p      = p_vals
         self._last_modelo = modelo
 
-        anio0   = params.get("anio0", anios[0])
-        t_vals  = [a - anio0 for a in anios]   # tiempo relativo para la gráfica
+        t0      = params.get("t0", anios[0])
+        t_vals  = [a - t0 for a in anios]   # tiempo relativo para la gráfica
+        unidad  = params.get("unidad_tiempo", "Años")
+        self._last_unidad = unidad
 
         sol_str = params.get("sol_str", "")
         if sol_str:
             self._sol_lbl.configure(
                 text=sol_str,
                 text_color=COLORS["green_dark"],
-                font=("Arial", 15, "bold"))
+                font=("Arial", 14, "bold"))
 
-        self._update_chart(modelo, anios, t_vals, p_vals, params.get("K"))
+        eq_sustituida = params.get("eq_sustituida", "")
+        if eq_sustituida:
+            self._eq_lbl.configure(text=f"Modelo sustituido:   {eq_sustituida}")
+
+        # Actualizamos el título de la columna de tiempo en la tabla
+        self._col_tiempo_lbl.configure(text=f"TIEMPO / {unidad.upper()}")
+
+        # Enviamos la unidad de tiempo a la gráfica
+        self._update_chart(modelo, anios, t_vals, p_vals, params.get("K"), unidad)
         self._update_table(anios, t_vals, p_vals)
         self._csv_btn.configure(state="normal")
 
-    def _update_chart(self, modelo, anios, t_vals, p_vals, k=None):
+    def _update_chart(self, modelo, anios, t_vals, p_vals, k=None, unidad="Años"):
         self._placeholder.place_forget()
         if self._mpl_canvas:
             self._mpl_canvas.get_tk_widget().destroy()
@@ -244,15 +265,17 @@ class SimulatorSection(ctk.CTkFrame):
 
         # Formateo de ejes
         ax.xaxis.set_major_locator(
-            matplotlib.ticker.MultipleLocator(5))
+            matplotlib.ticker.MultipleLocator(max(1, len(anios) // 6)))
         ax.xaxis.set_major_formatter(
             matplotlib.ticker.FuncFormatter(lambda v, _: str(int(v))))
         ax.yaxis.set_major_locator(matplotlib.ticker.MaxNLocator(nbins=8))
         ax.yaxis.set_major_formatter(
             matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:,.0f}"))
 
-        ax.set_xlabel("Año", fontsize=12, color="#475569", labelpad=8)
+        # Actualizamos el Eje X de la gráfica con la unidad de tiempo elegida
+        ax.set_xlabel(f"Tiempo / {unidad}", fontsize=12, color="#475569", labelpad=8)
         ax.set_ylabel("Población P(t)", fontsize=12, color="#475569", labelpad=8)
+        
         ax.tick_params(colors="#64748B", labelsize=10, length=4)
         for sp in ax.spines.values():
             sp.set_edgecolor("#E2E8F0")
@@ -288,7 +311,7 @@ class SimulatorSection(ctk.CTkFrame):
             idx = int(np.argmin(np.abs(a_arr - x)))
             tx, ty = a_arr[idx], p_arr[idx]
             annot.xy = (tx, ty)
-            annot.set_text(f"Año {int(tx)}\nP = {ty:,.0f}")
+            annot.set_text(f"t = {int(tx)}\nP = {ty:,.0f}")
             annot.set_visible(True)
             self._mpl_canvas.draw_idle()
 
@@ -306,7 +329,7 @@ class SimulatorSection(ctk.CTkFrame):
             row_f.grid(row=i, column=0, columnspan=3, sticky="ew")
             row_f.grid_columnconfigure((0, 1, 2), weight=1)
 
-            # Año
+            # Tiempo / Unidad
             ctk.CTkLabel(row_f,
                          text=str(anio),
                          font=("Arial", 13, "bold"),
@@ -341,7 +364,8 @@ class SimulatorSection(ctk.CTkFrame):
             return
         with open(path, "w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
-            writer.writerow(["Año", "Tiempo (t)", "Población P(t)"])
+            # También actualizamos el encabezado del CSV dinámicamente
+            writer.writerow([f"Tiempo/{self._last_unidad}", "Tiempo (t)", "Población P(t)"])
             for anio, p in zip(self._last_anios, self._last_p):
                 anio0 = self._last_anios[0]
                 writer.writerow([anio, anio - anio0, f"{p:.2f}"])

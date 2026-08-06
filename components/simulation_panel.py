@@ -1,15 +1,17 @@
-# components/simulation_panel.py
-"""
-Panel de simulación del modelo poblacional.
-"""
-
 import math
 import os
+import sys
 import customtkinter as ctk
 from PIL import Image
 from utils.theme import COLORS, FONTS, SIZES
 from components.custom_entry import CustomEntry
 
+def resolver_ruta_asset(ruta_relativa):
+    if getattr(sys, 'frozen', False):
+        ruta_base = sys._MEIPASS
+    else:
+        ruta_base = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    return os.path.join(ruta_base, ruta_relativa)
 
 def _safe_float(val, default=0.0):
     try:
@@ -17,20 +19,18 @@ def _safe_float(val, default=0.0):
     except Exception:
         return default
 
-
 def _safe_int(val, default=0):
     try:
         return int(float(str(val).strip()))
     except Exception:
         return default
 
-
 MODELOS_INFO = {
     "Modelo Exponencial": {
-        "titulo":  "Crecimiento sin restricciones ambientales",
-        "eq_sol":  "P(t)  =  P₀ · e^(r · t)",
-        "desc":    "La población crece proporcionalmente a su tamaño.\nNo existe límite superior.",
-        "img_file": "ecuacion_exponencial.png",  # Nombre de la imagen
+        "titulo":   "Crecimiento sin restricciones ambientales",
+        "eq_sol":   "P(t)  =  P₀ · e^(r · t)",
+        "desc":     "La población crece proporcionalmente a su tamaño.\nNo existe límite superior.",
+        "img_file": "ecuacion_exponencial.png",
         "variables": [
             ("P(t)",  "Población en el tiempo t",    "Número de individuos en un año dado"),
             ("P₀",   "Población inicial",            "Individuos al inicio (t = 0)"),
@@ -41,10 +41,10 @@ MODELOS_INFO = {
         "extra_params": [],
     },
     "Modelo Logístico": {
-        "titulo":  "Crecimiento con capacidad de carga",
-        "eq_sol":  "P(t)  =  K / (1 + A · e^(−r·t))     A = (K−P₀)/P₀",
-        "desc":    "La población crece hasta el límite K impuesto\npor los recursos disponibles.",
-        "img_file": "ecuacion_logistica.png",   # Nombre de la imagen
+        "titulo":   "Crecimiento con capacidad de carga",
+        "eq_sol":   "P(t)  =  K / (1 + A · e^(−r·t))     A = (K−P₀)/P₀",
+        "desc":     "La población crece hasta el límite K impuesto\npor los recursos disponibles.",
+        "img_file": "ecuacion_logistica.png",
         "variables": [
             ("P(t)",  "Población en el tiempo t",    "Número de individuos en un año dado"),
             ("P₀",   "Población inicial",            "Individuos al inicio (t = 0)"),
@@ -60,10 +60,7 @@ MODELOS_INFO = {
     },
 }
 
-
 class _Collapsible(ctk.CTkFrame):
-    """Sección desplegable reutilizable."""
-
     def __init__(self, parent, title, **kwargs):
         super().__init__(parent, fg_color="transparent", **kwargs)
         self.grid_columnconfigure(0, weight=1)
@@ -167,6 +164,7 @@ class SimulationPanel(ctk.CTkFrame):
 
         info = MODELOS_INFO[modelo]
 
+        # 1. Card de información del modelo y fórmula
         card = ctk.CTkFrame(self._scroll, fg_color=COLORS["surface"],
                             corner_radius=14,
                             border_width=1, border_color=COLORS["border"])
@@ -197,25 +195,22 @@ class SimulationPanel(ctk.CTkFrame):
                      text_color=COLORS["text_hint"],
                      anchor="w").grid(row=2, column=0, sticky="w", padx=14)
 
-        # ── Contenedor blanco para la imagen de la ecuación ──
         fb1 = ctk.CTkFrame(card, fg_color="#FFFFFF", corner_radius=8,
                            border_width=1, border_color=COLORS["border"])
         fb1.grid(row=3, column=0, sticky="ew", padx=14, pady=(4, 8))
         
-        # Cargar y mostrar la imagen
-        img_path = os.path.join("assets", info["img_file"])
+        ruta_relativa = os.path.join("assets", info["img_file"])
+        img_path = resolver_ruta_asset(ruta_relativa)
         try:
             pil_image = Image.open(img_path)
-            # Calculamos un tamaño proporcional (altura de 45px para que encaje bien)
             original_width, original_height = pil_image.size
             target_height = 45
             target_width = int((target_height / original_height) * original_width)
             
             ctk_img = ctk.CTkImage(light_image=pil_image, dark_image=pil_image, size=(target_width, target_height))
-            
             img_label = ctk.CTkLabel(fb1, text="", image=ctk_img)
             img_label.pack(padx=14, pady=12)
-        except Exception as e:
+        except Exception:
             ctk.CTkLabel(fb1, text=f"[ Imagen no encontrada: {info['img_file']} ]", 
                          text_color="red").pack(padx=14, pady=12)
 
@@ -252,153 +247,79 @@ class SimulationPanel(ctk.CTkFrame):
                          text_color=COLORS["text_sub"],
                          anchor="w", wraplength=250,
                          justify="left").pack(anchor="w")
-            # ── Selector de unidad de tiempo ──
-            tiempo_card = ctk.CTkFrame(
-                self._scroll,
-                fg_color=COLORS["surface"],
-                corner_radius=12,
-                border_width=1,
-                border_color=COLORS["border"]
-            )
 
-            tiempo_card.grid(
-                row=1,
-                column=0,
-                sticky="ew",
-                padx=14,
-                pady=(20, 10)
-            )
-
-            ctk.CTkLabel(
-                tiempo_card,
-                text="UNIDAD DE TIEMPO",
-                font=("Arial", 12, "bold"),
-                text_color=COLORS["text_hint"]
-            ).pack(
-                anchor="w",
-                padx=14,
-                pady=(10, 4)
-            )
-
-            ctk.CTkLabel(
-                tiempo_card,
-                text="Selecciona la unidad en la que se realizará la simulación:",
-                font=("Arial", 12),
-                text_color=COLORS["text_sub"]
-            ).pack(
-                anchor="w",
-                padx=14,
-                pady=(0, 8)
-            )
-
-            self._unidad_tiempo = ctk.CTkComboBox(
-                tiempo_card,
-                values=[
-                    "Segundos",
-                    "Minutos",
-                    "Horas",
-                    "Días",
-                    "Meses",
-                    "Años"
-                ],
-                height=35
-            )
-
-            self._unidad_tiempo.set("Años")
-            
-            self._unidad_tiempo.pack(
-                fill="x",
-                padx=14,
-                pady=(0, 12)
-            )
-
-        ctk.CTkLabel(
-            tiempo_card,
-            text="INTERVALO DE MUESTRA",
-            font=("Arial", 12, "bold"),
-            text_color=COLORS["text_hint"]
-        ).pack(
-            anchor="w",
-            padx=14,
-            pady=(0, 4)
+        # 2. Card de Unidad de Tiempo e Intervalo
+        tiempo_card = ctk.CTkFrame(
+            self._scroll,
+            fg_color=COLORS["surface"],
+            corner_radius=12,
+            border_width=1,
+            border_color=COLORS["border"]
         )
+        tiempo_card.grid(row=1, column=0, sticky="ew", padx=14, pady=(20, 10))
 
-        self._intervalo = ctk.CTkEntry(
+        ctk.CTkLabel(tiempo_card, text="UNIDAD DE TIEMPO", font=("Arial", 12, "bold"),
+                     text_color=COLORS["text_hint"]).pack(anchor="w", padx=14, pady=(10, 4))
+        ctk.CTkLabel(tiempo_card, text="Selecciona la unidad en la que se realizará la simulación:",
+                     font=("Arial", 12), text_color=COLORS["text_sub"]).pack(anchor="w", padx=14, pady=(0, 8))
+
+        self._unidad_tiempo = ctk.CTkComboBox(
             tiempo_card,
-            placeholder_text="Ejemplo: 1, 5, 10"
+            values=["Segundos", "Minutos", "Horas", "Días", "Meses", "Años"],
+            height=35
         )
-    
+        self._unidad_tiempo.set("Años")
+        self._unidad_tiempo.pack(fill="x", padx=14, pady=(0, 12))
+
+        ctk.CTkLabel(tiempo_card, text="INTERVALO DE MUESTRA", font=("Arial", 12, "bold"),
+                     text_color=COLORS["text_hint"]).pack(anchor="w", padx=14, pady=(0, 4))
+
+        self._intervalo = ctk.CTkEntry(tiempo_card, placeholder_text="Ejemplo: 1, 5, 10")
         self._intervalo.insert(0, "1")
-    
-        self._intervalo.pack(
-            fill="x",
-            padx=14,
-            pady=(0, 12)
-        )
+        self._intervalo.pack(fill="x", padx=14, pady=(0, 12))
 
-        ctk.CTkLabel(self._scroll,
-                     text="DATOS DEL PROBLEMA",
-                     font=("Arial", 12, "bold"),
-                     text_color=COLORS["text_hint"],
-                     anchor="w").grid(row=2, column=0, sticky="w",
-                                      padx=18, pady=(20, 6))
+        # 3. Entradas de datos del problema
+        ctk.CTkLabel(self._scroll, text="DATOS DEL PROBLEMA",
+                     font=("Arial", 12, "bold"), text_color=COLORS["text_hint"],
+                     anchor="w").grid(row=2, column=0, sticky="w", padx=18, pady=(20, 6))
 
         campos_comunes = [
-            ("t_inicial", "Tiempo inicial (t₀)", "0",
-            "Tiempo donde inicia la medición."),
-            ("p0", "Población inicial (P₀)", "3500",
-            "Número de individuos en el tiempo inicial."),
-            ("t_ref", "Tiempo de referencia (t₁)", "10",
-            "Tiempo de la segunda medición usada para calcular r."),
-            ("pf", "Población de referencia (Pf)", "5000",
-            "Número de individuos en el tiempo de referencia."),
-            ("t_objetivo", "Tiempo objetivo (proyección)", "50",
-            "Tiempo donde se calculará la población futura."),
+            ("t_inicial", "Tiempo inicial (t₀)", "0", "Tiempo donde inicia la medición."),
+            ("p0", "Población inicial (P₀)", "3500", "Número de individuos en el tiempo inicial."),
+            ("t_ref", "Tiempo de referencia (t₁)", "10", "Tiempo de la segunda medición usada para calcular r."),
+            ("pf", "Población de referencia (Pf)", "5000", "Número de individuos en el tiempo de referencia."),
+            ("t_objetivo", "Tiempo objetivo (proyección)", "50", "Tiempo donde se calculará la población futura."),
         ]
-                
 
         for idx, (key, label, dflt, tip) in enumerate(campos_comunes):
-            e = CustomEntry(self._scroll,
-                label=label,
-                placeholder=dflt,
-                tooltip=tip)
+            e = CustomEntry(self._scroll, label=label, placeholder=dflt, tooltip=tip)
             e.insert(0, dflt)
             e.grid(row=3 + idx, column=0, sticky="ew", padx=14, pady=(0, 15))
             self._entries[key] = e
 
-        next_row = 2 + len(campos_comunes)
+        next_row = 3 + len(campos_comunes)
 
         for i, (label, dflt, unit, tip) in enumerate(info["extra_params"]):
-            e = CustomEntry(self._scroll,
-                label=label,
-                placeholder=dflt,
-                unit=unit,
-                tooltip=tip)
+            e = CustomEntry(self._scroll, label=label, placeholder=dflt, unit=unit, tooltip=tip)
             e.insert(0, dflt)
-            e.grid(row=next_row + i, column=0, sticky="ew",
-                   padx=14, pady=(0, 10))
+            e.grid(row=next_row + i, column=0, sticky="ew", padx=14, pady=(0, 10))
             self._entries[label] = e
 
+        # 4. Tasa r calculada
         r_card = ctk.CTkFrame(self._scroll, fg_color=COLORS["surface"],
-            corner_radius=12,
-            border_width=1, border_color=COLORS["border"])
-        r_card.grid(row=next_row + len(info["extra_params"])+1, column=0,
+                             corner_radius=12, border_width=1, border_color=COLORS["border"])
+        r_card.grid(row=next_row + len(info["extra_params"]) + 1, column=0,
                     sticky="ew", padx=14, pady=(14, 14))
         r_card.grid_columnconfigure(0, weight=1)
 
-        ctk.CTkLabel(r_card,
-            text="Tasa de crecimiento calculada  (r)",
-            font=("Arial", 12, "bold"),
-            text_color=COLORS["text_hint"],
-            anchor="w").grid(row=0, column=0, sticky="w",
-                            padx=14, pady=(10, 2))
+        ctk.CTkLabel(r_card, text="Tasa de crecimiento calculada  (r)",
+                     font=("Arial", 12, "bold"), text_color=COLORS["text_hint"],
+                     anchor="w").grid(row=0, column=0, sticky="w", padx=14, pady=(10, 2))
 
         self._r_lbl = ctk.CTkLabel(
             r_card, text="r  =  —  (ejecuta la simulación para calcular)",
-            font=("Arial", 15, "italic"),
-            text_color=COLORS["text_sub"],
-            fg_color=COLORS["card"],
-            corner_radius=8,
+            font=("Arial", 15, "italic"), text_color=COLORS["text_sub"],
+            fg_color=COLORS["card"], corner_radius=8,
             anchor="w", wraplength=360)
         self._r_lbl.grid(row=1, column=0, sticky="ew", padx=14, pady=(0, 12))
 
@@ -416,7 +337,6 @@ class SimulationPanel(ctk.CTkFrame):
             pf = read("pf", 5000.0)
             t_obj = _safe_float(self._entries["t_objetivo"].get(), 50)
             
-
             if p0 <= 0:
                 self._set_status("⚠  P₀ debe ser mayor que 0", error=True); return
             if pf <= 0:
@@ -454,7 +374,7 @@ class SimulationPanel(ctk.CTkFrame):
                     text=texto_r,
                     text_color=COLORS["green_dark"])
 
-            paso = paso = int(self._intervalo.get())
+            paso = int(self._intervalo.get())
             tiempos = list(range(int(t0), int(t_obj) + 1, paso))
             if tiempos[-1] != t_obj:
                 tiempos.append(t_obj)
@@ -468,12 +388,20 @@ class SimulationPanel(ctk.CTkFrame):
                     return
 
                 p_final  = p0 * math.exp(r * dt_obj)
+                
+                # FÓRMULA SUSTITUIDA CON VALORES REALES
+                eq_sustituida = f"P(t) = {p0:g} · e^({r:.6f} · t)"
+                
+                # MENSAJE SUPERIOR LIMPIO CON PARÁMETROS DE ENTRADA
                 sol_str = (
-                    f"P(t) = P₀ · e^(r·t)\n\n"
+                    f"Parámetros: P₀ = {p0:g}  |  r = {r:.6f}  |  t = {t_obj:g}\n\n"
                     f"Resultado: {p_final:,.0f} habitantes"
                 )
+                
+                # ACTUALIZACIÓN AQUÍ: Se añade "unidad_tiempo"
                 params = {"P₀": p0, "r": r, "t0": t0,
-                        "t_obj": t_obj, "sol_str": sol_str}
+                          "t_obj": t_obj, "sol_str": sol_str, "eq_sustituida": eq_sustituida,
+                          "unidad_tiempo": self._unidad_tiempo.get()}
 
             else:
                 A = (k - p0) / p0
@@ -483,12 +411,20 @@ class SimulationPanel(ctk.CTkFrame):
                     p_vals = [k if t > 0 else p0 for t in t_vals]
 
                 p_final = k / (1 + A * math.exp(-r * dt_obj))
+                
+                # FÓRMULA SUSTITUIDA CON VALORES REALES
+                eq_sustituida = f"P(t) = {k:g} / (1 + {A:.6f} · e^(-{r:.6f} · t))"
+                
+                # MENSAJE SUPERIOR LIMPIO CON PARÁMETROS DE ENTRADA
                 sol_str = (
-                    f"P(t) = K / (1 + A·e^(-r·t))\n\n"
+                    f"Parámetros: P₀ = {p0:g}  |  K = {k:g}  |  r = {r:.6f}  |  t = {t_obj:g}\n\n"
                     f"Resultado: {p_final:,.0f} habitantes"
                 )
+                
+                # ACTUALIZACIÓN AQUÍ: Se añade "unidad_tiempo"
                 params = {"P₀": p0, "r": r, "K": k, "A": A,
-                        "t0": t0, "t_obj": t_obj, "sol_str": sol_str}
+                          "t0": t0, "t_obj": t_obj, "sol_str": sol_str, "eq_sustituida": eq_sustituida,
+                          "unidad_tiempo": self._unidad_tiempo.get()}
 
             self._set_status(
                 f"✓  r = {r:.6f}   |   "

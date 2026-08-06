@@ -1,22 +1,24 @@
-# views/intro_view.py
 import os
+import sys
 import customtkinter as ctk
 from PIL import Image
 from utils.theme import COLORS, FONTS, SIZES
 
-class IntroView(ctk.CTkFrame):
-    """Pantalla de bienvenida: explica qué es un sistema dinámico y cómo
-    funciona cada modelo disponible antes de entrar al simulador."""
+def resolver_ruta_asset(ruta_relativa):
+    if getattr(sys, 'frozen', False):
+        ruta_base = sys._MEIPASS
+    else:
+        ruta_base = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    return os.path.join(ruta_base, ruta_relativa)
 
+class IntroView(ctk.CTkFrame):
     def __init__(self, master, on_continue=None, **kwargs):
         super().__init__(master, fg_color=COLORS["bg"], corner_radius=0, **kwargs)
         self.on_continue = on_continue
-
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
         self._build()
 
-    # ────────────────────────────────────────────────────────────────
     def _build(self):
         scroll = ctk.CTkScrollableFrame(self, fg_color="transparent",
                                         scrollbar_button_color=COLORS["border"])
@@ -25,7 +27,6 @@ class IntroView(ctk.CTkFrame):
 
         row = 0
 
-        # ── Encabezado ──────────────────────────────────────────────
         header = ctk.CTkFrame(scroll, fg_color="transparent")
         header.grid(row=row, column=0, sticky="ew", padx=28, pady=(32, 8))
         header.grid_columnconfigure(0, weight=1)
@@ -39,7 +40,6 @@ class IntroView(ctk.CTkFrame):
                      text_color=COLORS["text_sub"]).grid(row=1, column=0, sticky="w", pady=(2, 0))
         row += 1
 
-        # ── ¿Qué es un sistema dinámico? ───────────────────────────
         intro_card = ctk.CTkFrame(scroll, fg_color=COLORS["card"],
                                   corner_radius=18,
                                   border_width=1, border_color=COLORS["border"])
@@ -62,7 +62,6 @@ class IntroView(ctk.CTkFrame):
         ).grid(row=1, column=0, sticky="w", padx=24, pady=(0, 20))
         row += 1
 
-        # ── Título de sección de modelos ───────────────────────────
         ctk.CTkLabel(scroll, text="Modelos disponibles",
                      font=FONTS["label"],
                      text_color=COLORS["text_sub"],
@@ -70,7 +69,6 @@ class IntroView(ctk.CTkFrame):
                                       padx=28, pady=(22, 8))
         row += 1
 
-        # ── Tarjetas de modelos (lado a lado) ──────────────────────
         models_row = ctk.CTkFrame(scroll, fg_color="transparent")
         models_row.grid(row=row, column=0, sticky="ew", padx=28, pady=(0, 0))
         models_row.grid_columnconfigure((0, 1), weight=1)
@@ -82,7 +80,7 @@ class IntroView(ctk.CTkFrame):
             para_que=("Sirve para crecimiento libre, sin límite de recursos: "
                       "bacterias en sus primeras horas, capital con interés compuesto, "
                       "poblaciones al inicio de su expansión."),
-            image_filename="ecuacion_exponencial.png",  # <-- AQUÍ USAMOS LA IMAGEN
+            image_filename="ecuacion_exponencial.png",
             solucion="P(t) = P₀ · e^(r·t)",
             variables=[("P₀", "Población inicial"), ("r", "Tasa de crecimiento"), ("t", "Tiempo")],
             como_funciona=("La app toma P₀ y r, y evalúa la fórmula para cada t. "
@@ -96,7 +94,7 @@ class IntroView(ctk.CTkFrame):
             para_que=("Sirve cuando los recursos son limitados: la población crece rápido "
                       "al inicio, pero se frena al acercarse a una capacidad máxima K "
                       "(alimento, espacio, mercado)."),
-            image_filename="ecuacion_logistica.png",  # <-- AQUÍ USAMOS LA IMAGEN
+            image_filename="ecuacion_logistica.png",
             solucion="P(t) = K / (1 + C · e^(−r·t))",
             variables=[("K", "Capacidad de carga (límite)"), ("C", "Constante = (K − P₀)/P₀")],
             como_funciona=("La app calcula C a partir de P₀ y K, luego evalúa la fórmula "
@@ -104,7 +102,6 @@ class IntroView(ctk.CTkFrame):
         )
         row += 1
 
-        # ── Comparación rápida ──────────────────────────────────────
         comp_card = ctk.CTkFrame(scroll, fg_color=COLORS["card"],
                                  corner_radius=18,
                                  border_width=1, border_color=COLORS["border"])
@@ -129,10 +126,6 @@ class IntroView(ctk.CTkFrame):
                      wraplength=340, justify="left").pack(padx=14, pady=10, anchor="w")
         row += 1
 
-        # ── Botón continuar ─────────────────────────────────────────
-        # Usamos lambda para evaluar on_continue en tiempo de clic (no al construir),
-        # así si main.py cambia self.intro_view.on_continue después, el botón
-        # siempre llama al callback correcto (ir al dashboard o al simulador).
         ctk.CTkButton(scroll, text="Continuar al simulador",
                       font=FONTS["button"],
                       height=SIZES["button_height"],
@@ -143,7 +136,6 @@ class IntroView(ctk.CTkFrame):
                       command=lambda: self.on_continue() if self.on_continue else None
                       ).grid(row=row, column=0, sticky="ew", padx=28, pady=(24, 32))
 
-    # ────────────────────────────────────────────────────────────────
     def _build_model_card(self, parent, col, badge, badge_bg, badge_fg, titulo,
                           para_que, image_filename, solucion, variables, como_funciona):
         pad = (0, 10) if col == 0 else (10, 0)
@@ -153,7 +145,6 @@ class IntroView(ctk.CTkFrame):
         card.grid(row=0, column=col, sticky="new", padx=pad, pady=(0, 0))
         card.grid_columnconfigure(0, weight=1)
 
-        # Badge + título
         hdr = ctk.CTkFrame(card, fg_color="transparent")
         hdr.grid(row=0, column=0, sticky="w", padx=22, pady=(18, 4))
         ctk.CTkLabel(hdr, text=f"  {badge}  ",
@@ -166,14 +157,12 @@ class IntroView(ctk.CTkFrame):
                      text_color=COLORS["text_main"],
                      anchor="w").grid(row=1, column=0, sticky="w", padx=22, pady=(4, 8))
 
-        # Para qué sirve
         ctk.CTkLabel(card, text=para_que,
                      font=FONTS["caption"],
                      text_color=COLORS["text_sub"],
                      wraplength=330, justify="left", anchor="w"
                      ).grid(row=2, column=0, sticky="w", padx=22, pady=(0, 14))
 
-        # Ecuaciones
         eq_frame = ctk.CTkFrame(card, fg_color=COLORS["surface"], corner_radius=12)
         eq_frame.grid(row=3, column=0, sticky="ew", padx=22, pady=(0, 12))
         eq_frame.grid_columnconfigure(0, weight=1)
@@ -182,13 +171,10 @@ class IntroView(ctk.CTkFrame):
                      font=FONTS["small"], text_color=COLORS["text_hint"],
                      anchor="w").grid(row=0, column=0, sticky="w", padx=14, pady=(10, 0))
 
-        # --- LÓGICA PARA CARGAR LA IMAGEN DE LA ECUACIÓN ---
         try:
-            # Busca la imagen en la carpeta 'assets' subiendo un nivel desde 'views'
-            current_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            image_path = os.path.join(current_dir, "assets", image_filename)
+            ruta_relativa = os.path.join("assets", image_filename)
+            image_path = resolver_ruta_asset(ruta_relativa)
             
-            # Cargar imagen y calcular tamaño proporcional (altura fija de 40px)
             pil_img = Image.open(image_path)
             base_height = 35
             w_percent = (base_height / float(pil_img.size[1]))
@@ -196,14 +182,11 @@ class IntroView(ctk.CTkFrame):
             
             ctk_img = ctk.CTkImage(light_image=pil_img, dark_image=pil_img, size=(h_size, base_height))
             
-            # Mostrar la imagen en lugar del texto
             ctk.CTkLabel(eq_frame, text="", image=ctk_img).grid(row=1, column=0, sticky="w", padx=14, pady=(5, 10))
         except Exception as e:
-            # Si no encuentra la imagen, muestra este texto por defecto
             ctk.CTkLabel(eq_frame, text=f"[Falta imagen: {image_filename}]",
                          font=("Arial", 12, "italic"), text_color=COLORS["text_main"],
                          anchor="w").grid(row=1, column=0, sticky="w", padx=14, pady=(0, 10))
-        # ----------------------------------------------------
 
         ctk.CTkFrame(eq_frame, height=1, fg_color=COLORS["border"]).grid(
             row=2, column=0, sticky="ew", padx=14)
@@ -215,14 +198,12 @@ class IntroView(ctk.CTkFrame):
                      font=("Arial", 14, "bold"), text_color=COLORS["green_dark"],
                      anchor="w").grid(row=4, column=0, sticky="w", padx=14, pady=(0, 12))
 
-        # Variables clave
         var_text = "  ·  ".join(f"{k} = {v}" for k, v in variables)
         ctk.CTkLabel(card, text=var_text,
                      font=FONTS["small"], text_color=COLORS["text_hint"],
                      wraplength=330, justify="left", anchor="w"
                      ).grid(row=4, column=0, sticky="w", padx=22, pady=(0, 10))
 
-        # Cómo lo calcula la app
         how = ctk.CTkFrame(card, fg_color="transparent")
         how.grid(row=5, column=0, sticky="ew", padx=22, pady=(0, 20))
         ctk.CTkLabel(how, text=como_funciona,
